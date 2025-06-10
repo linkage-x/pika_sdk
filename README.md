@@ -71,7 +71,7 @@ make
 ### pip3 安装
 
 ```bash
-pip3 show agx-pypika
+pip3 install agx-pypika
 ```
 
 安装过程中 `Building wheel for wxpython (setup.py) ...`  在编译 `wxPython` 这步需要耗时很长，请耐心等待。
@@ -139,10 +139,6 @@ SDK 提供了多个示例代码，位于 `examples` 目录下，包括：
   - `sense_example.py`: 演示如何使用 Pika Sense 设备的基本功能
   - `quickly_open_camera.py`: 演示如何快速打开相机并保存图像
   - `vive_tracker_example.py`: 获取pika sense的位姿信息
-
-- `gripper_example.py`: Pika Gripper 设备使用示例，现在包含夹爪距离控制示例
-- `sense_example.py`: Pika Sense 设备使用示例
-- `vive_tracker_example.py`: Vive Tracker 位姿追踪示例
 
 这些示例代码展示了 SDK 的基本用法和常见功能，可以作为您开发自己应用的参考。
 
