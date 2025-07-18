@@ -169,6 +169,10 @@ class SerialComm:
                         # 更新最新数据
                         with self.data_lock:
                             self.latest_data = json_data
+                    # 缓冲区数据长度大于2000字节就将其清空
+                    else:
+                        if len(self.buffer) > 2000:
+                            self.buffer = ""
                 
                 # 短暂休眠，避免CPU占用过高
                 time.sleep(0.001)

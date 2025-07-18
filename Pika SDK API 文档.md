@@ -133,6 +133,25 @@ state = my_sense.get_command_state()
 print(f"命令状态: {state}")
 ```
 
+#### get_gripper_distance()
+
+获取夹爪开合距离。
+
+```python
+distance = my_sense.get_gripper_distance()
+print(f"夹爪开合距离: {distance}")
+```
+
+**返回值**:
+- `float`: 夹爪开合距离(mm)
+
+**示例**:
+```python
+distance = my_sense.get_gripper_distance()
+print(f"夹爪开合距离: {distance}")
+```
+
+
 #### set_camera_param(camera_width, camera_height, camera_fps)
 
 设置相机分辨率和帧率。
@@ -1495,7 +1514,7 @@ for device_name, info in all_info.items():
 - `device_name` (str): 设备名称
 - `timestamp` (float): 时间戳
 - `position` (list): 位置 [x, y, z]
-- `rotation` (list): 旋转四元数 [w, x, y, z]
+- `rotation` (list): 旋转四元数 [x, y, z, w]
 
 #### 示例
 
@@ -1506,7 +1525,7 @@ if pose:
     print(f"设备名称: {pose.device_name}")
     print(f"时间戳: {pose.timestamp}")
     print(f"位置: {pose.position}")  # [x, y, z]
-    print(f"旋转: {pose.rotation}")  # [w, x, y, z] 四元数
+    print(f"旋转: {pose.rotation}")  # [x, y, z, w] 四元数
     
     # 提取位置和旋转数据用于进一步处理
     position = pose.position  # [x, y, z]
@@ -1517,8 +1536,8 @@ if pose:
     print(f"距离原点的平方: {distance_squared:.6f}")
     
     # 提取旋转四元数的各个分量
-    w, x, y, z = rotation
-    print(f"四元数分量: w={w:.6f}, x={x:.6f}, y={y:.6f}, z={z:.6f}")
+    x, y, z, w = rotation
+    print(f"四元数分量: x={x:.6f}, y={y:.6f}, z={z:.6f}, w={w:.6f}")
 ```
 
 ## 错误处理
