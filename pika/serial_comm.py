@@ -10,10 +10,12 @@ import time
 import json
 import serial
 import logging
+import re # 导入re模块用于正则表达式
+import struct # 导入struct模块
 
 # 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger('pika.serial_comm')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger("pika.serial_comm")
 
 class SerialComm:
     """
@@ -24,8 +26,7 @@ class SerialComm:
         baudrate (int): 波特率，默认为460800
         timeout (float): 超时时间，默认为1.0秒
     """
-    
-    def __init__(self, port='/dev/ttyUSB0', baudrate=460800, timeout=1.0):
+    def __init__(self, port=r"/dev/ttyUSB0", baudrate=460800, timeout=1.0):
         self.port = port
         self.baudrate = baudrate
         self.timeout = timeout
@@ -202,7 +203,12 @@ class SerialComm:
                         if not stack:  # 找到完整的JSON对象
                             json_str = self.buffer[start:i+1]
                             self.buffer = self.buffer[i+1:]
-                            return json.loads(json_str)
+                            
+                            # --- 关键修改：处理多余的逗号 ---
+                            cleaned_json_str = re.sub(r',\s*}', '}', json_str)
+                            cleaned_json_str = re.sub(r',\s*\]', ']', cleaned_json_str)
+                            
+                            return json.loads(cleaned_json_str)
             
             # 如果没有找到完整的JSON对象，保留缓冲区
             return None
@@ -257,5 +263,4 @@ class SerialComm:
         """
         self.disconnect()
 
-# 添加缺少的struct模块导入
-import struct
+
