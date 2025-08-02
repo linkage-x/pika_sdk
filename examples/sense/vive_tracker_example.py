@@ -91,8 +91,8 @@ try:
                     logger.info(f"距离原点的平方: {distance_squared:.6f}")
                     
                     # 示例：提取旋转四元数的各个分量
-                    w, x, y, z = rotation
-                    logger.info(f"四元数分量: w={w:.6f}, x={x:.6f}, y={y:.6f}, z={z:.6f}")
+                    x, y, z, w = rotation
+                    logger.info(f"四元数分量: x={x:.6f}, y={y:.6f}, z={z:.6f}, w={w:.6f}")
                     
                 else:
                     logger.warning(f"未能获取{target_device}的位姿数据，等待下一次尝试...")

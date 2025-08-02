@@ -36,7 +36,7 @@ class Gripper:
     def __init__(self, port='/dev/ttyUSB0'):
         self.port = port
         json_pattern = r'\{\r\n"motor":\{\r\n"Speed":[^\r\n]*,\r\n"Current":[^\r\n]*,\r\n"Position":[^\r\n]*\r\n\}\r\n,\r\n"motorstatus":\{\r\n"Voltage":[^\r\n]*,\r\n"DriverTemp":[^\r\n]*,\r\n"MotorTemp":[^\r\n]*,\r\n"Status":[^\r\n]*,\r\n"BusCurrent":[^\r\n]*\r\n\}\r\n\r\n\}'
-        self.serial_comm = SerialComm(port=port, json_pattern=json_pattern)
+        self.serial_comm = SerialComm(port=port)
         self.is_connected = False
         self.data_lock = threading.Lock()
         self.motor_data = {
@@ -68,6 +68,8 @@ class Gripper:
         # 相机对象，延迟初始化
         self._fisheye_camera = None
         self._realsense_camera = None
+        
+        self.rad = None
     
     def connect(self):
         """
@@ -316,13 +318,13 @@ class Gripper:
         
         return self.serial_comm.send_command(CommandType.SET_ZERO)
     
-    def set_motor_angle(self, rad):
+    def set_motor_angle(self,rad):
         """
-        设置电机转动弧度
+        根据电流值设置电机转动弧度，目的为了输出恒定的控制力
         
         参数:
-            rad (float): 目标弧度，单位为弧度
-            
+            rad: 弧度
+        
         返回:
             bool: 操作是否成功
         """
@@ -335,7 +337,46 @@ class Gripper:
             rad = 0
             logger.warning("电机弧度不能为负值，已设置为0")
         
-        return self.serial_comm.send_command(CommandType.POSITION_CTRL, rad)
+        # 如果电流值在 -600 之上，就正常控制
+        if self.motor_data['Current'] > -600:
+            self.rad = rad
+            self.serial_comm.send_command(CommandType.POSITION_CTRL, rad)
+        
+        # 如果瞬时电流超过 -2300，则缓慢张开夹爪
+        elif self.motor_data['Current'] < -2300:
+            self.rad += 0.05 
+            print("当前电机弧度:", self.rad)
+            self.serial_comm.send_command(CommandType.POSITION_CTRL, self.rad)
+        
+        # 如果电流值在 -10000 之下，就跳出 error
+        elif self.motor_data['Current'] < -10000:
+           logger.error("电机已过流，启动保护措施，请检查gripper电机状态，如亮红灯则需断电重启")
+
+        # 夹爪正常张开
+        else:
+            if rad > self.rad:
+                self.serial_comm.send_command(CommandType.POSITION_CTRL, rad)
+        
+    # def set_motor_angle(self, rad):
+    #     """
+    #     设置电机转动弧度
+        
+    #     参数:
+    #         rad (float): 目标弧度，单位为弧度
+            
+    #     返回:
+    #         bool: 操作是否成功
+    #     """
+    #     if not self.is_connected:
+    #         logger.error("设备未连接，无法设置电机弧度")
+    #         return False
+        
+    #     # 确保角度非负
+    #     if rad < 0:
+    #         rad = 0
+    #         logger.warning("电机弧度不能为负值，已设置为0")
+        
+    #     return self.serial_comm.send_command(CommandType.POSITION_CTRL, rad)
     
     def set_gripper_distance(self, target_gripper_distance_mm):
         """

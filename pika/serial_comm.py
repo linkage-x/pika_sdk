@@ -10,11 +10,12 @@ import time
 import json
 import serial
 import logging
-import re
+import re # 导入re模块用于正则表达式
+import struct # 导入struct模块
 
 # 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger('pika.serial_comm')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger("pika.serial_comm")
 
 class SerialComm:
     """
@@ -25,8 +26,7 @@ class SerialComm:
         baudrate (int): 波特率，默认为460800
         timeout (float): 超时时间，默认为1.0秒
     """
-    
-    def __init__(self, port='/dev/ttyUSB0', baudrate=460800, timeout=1.0, json_pattern=None):
+    def __init__(self, port=r"/dev/ttyUSB0", baudrate=460800, timeout=1.0):
         self.port = port
         self.baudrate = baudrate
         self.timeout = timeout
@@ -38,7 +38,6 @@ class SerialComm:
         self.callback = None
         self.data_lock = threading.Lock()
         self.latest_data = {}
-        self.json_pattern = json_pattern
     
     def connect(self):
         """
@@ -170,6 +169,10 @@ class SerialComm:
                         # 更新最新数据
                         with self.data_lock:
                             self.latest_data = json_data
+                    # 缓冲区数据长度大于2000字节就将其清空
+                    else:
+                        if len(self.buffer) > 2000:
+                            self.buffer = ""
                 
                 # 短暂休眠，避免CPU占用过高
                 time.sleep(0.001)
@@ -187,18 +190,32 @@ class SerialComm:
             dict: 解析到的JSON对象，如果没有找到则返回None
         """
         try:
-            if self.json_pattern:
-                matches = list(re.finditer(self.json_pattern, self.buffer))
-                if matches:
-                    last_match = matches[-1]
-                    last_match_str = last_match.group()
-                    self.buffer = self.buffer[last_match.end():]
-                    return json.loads(last_match_str)
-                else:
-                    return None
-            else:
-                raise ValueError("json_pattern is not set")
+            # 查找JSON对象的开始和结束位置
+            start = self.buffer.find('{')
+            if start == -1:
+                self.buffer = ""
+                return None
             
+            # 使用栈来匹配括号
+            stack = []
+            for i in range(start, len(self.buffer)):
+                if self.buffer[i] == '{':
+                    stack.append(i)
+                elif self.buffer[i] == '}':
+                    if stack:
+                        stack.pop()
+                        if not stack:  # 找到完整的JSON对象
+                            json_str = self.buffer[start:i+1]
+                            self.buffer = self.buffer[i+1:]
+                            
+                            # --- 关键修改：处理多余的逗号 ---
+                            cleaned_json_str = re.sub(r',\s*}', '}', json_str)
+                            cleaned_json_str = re.sub(r',\s*\]', ']', cleaned_json_str)
+                            
+                            return json.loads(cleaned_json_str)
+            
+            # 如果没有找到完整的JSON对象，保留缓冲区
+            return None
         except json.JSONDecodeError as e:
             logger.error(f"JSON解析错误: {e}")
             self.buffer = ""  # 跳过错误的开始位置
@@ -250,5 +267,4 @@ class SerialComm:
         """
         self.disconnect()
 
-# 添加缺少的struct模块导入
-import struct
+

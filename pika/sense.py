@@ -6,6 +6,7 @@ Pika Sense 设备类，提供对Pika Sense设备的访问接口
 """
 
 import time
+import math
 import logging
 import threading
 from .serial_comm import SerialComm
@@ -25,7 +26,7 @@ class Sense:
     def __init__(self, port='/dev/ttyUSB0'):
         self.port = port
         json_pattern = r'\{\r\n"Command":[0-1],\r\n"AS5047":\{\r\n"angle":[^\r\n]*,\r\n"rad":[^\r\n]*\r\n\},\r\n\r\n"IMU":\{\r\n"acc":\[[^\r\n]*\],\r\n"gyr":\[[^\r\n]*\],\r\n"pitch":[^\r\n]*,\r\n"roll":[^\r\n]*,\r\n"yaw":[^\r\n]*\r\n\}\r\n\r\n\}'
-        self.serial_comm = SerialComm(port=port, json_pattern=json_pattern)
+        self.serial_comm = SerialComm(port=port)
         self.is_connected = False
         self.data_lock = threading.Lock()
         
@@ -140,6 +141,26 @@ class Sense:
         except Exception as e:
             logger.error(f"处理数据回调异常: {e}")
     
+    def get_distance(self,angle):
+        angle = (180.0 - 43.99) / 180.0 * math.pi - angle
+        height = 0.0325 * math.sin(angle)
+        width_d = 0.0325 * math.cos(angle)
+        width = math.sqrt(0.058**2 - (height - 0.01456)**2) + width_d
+        # 将单位由m转换为mm
+        return width*1000
+
+    def get_gripper_distance(self):
+        """
+        获取当前夹爪位置(mm)
+        """
+        if not self.is_connected:
+            logger.warning("设备未连接，返回默认电机位置")
+        with self.data_lock:
+            angle = self.encoder_data['rad']
+            distance = (self.get_distance(angle) - self.get_distance(0)) * 2   #default
+            return distance
+        
+        
     def get_encoder_data(self):
         """
         获取编码器数据

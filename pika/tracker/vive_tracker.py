@@ -33,7 +33,7 @@ class PoseData:
         self.device_name = device_name
         self.timestamp = timestamp
         self.position = position  # [x, y, z]
-        self.rotation = rotation  # [w, x, y, z] 四元数
+        self.rotation = rotation  # [x, y, z, w] 四元数
 
     def __str__(self):
         """格式化输出位姿信息"""
