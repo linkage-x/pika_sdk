@@ -63,6 +63,7 @@ class Gripper:
         self.camera_width=1280
         self.camera_height=720
         self.camera_fps=30
+        self.fisheye_thread_fps=100
         self.device_id=0
         
         # 相机对象，延迟初始化
@@ -345,7 +346,7 @@ class Gripper:
         # 如果瞬时电流超过 -2300，则缓慢张开夹爪
         elif self.motor_data['Current'] < -2300:
             self.rad += 0.05 
-            print("当前电机弧度:", self.rad)
+            logger.warning("过流,当前电机弧度:", self.rad)
             self.serial_comm.send_command(CommandType.POSITION_CTRL, self.rad)
         
         # 如果电流值在 -10000 之下，就跳出 error
@@ -485,7 +486,7 @@ class Gripper:
         
         return self.serial_comm.send_command(CommandType.EFFORT_CTRL, effort)
     
-    def set_camera_param(self,camera_width,camera_height,camera_fps):
+    def set_camera_param(self,camera_width,camera_height,camera_fps,fisheye_thread_fps=100):
         '''
         设置相机分辨率和帧率
         
@@ -497,7 +498,8 @@ class Gripper:
         self.camera_width = camera_width
         self.camera_height = camera_height
         self.camera_fps = camera_fps
-    
+        self.fisheye_thread_fps = fisheye_thread_fps
+        
     def set_fisheye_camera_index(self,index):
         '''
         设置鱼眼相机的索引
@@ -531,7 +533,7 @@ class Gripper:
         if self._fisheye_camera is None:
             try:
                 from .camera.fisheye import FisheyeCamera
-                self._fisheye_camera = FisheyeCamera(self.camera_width,self.camera_height,self.camera_fps,self.fisheye_camera_index)
+                self._fisheye_camera = FisheyeCamera(self.camera_width,self.camera_height,self.camera_fps,self.fisheye_camera_index,self.fisheye_thread_fps)
                 self._fisheye_camera.connect()
             except Exception as e:
                 logger.error(f"初始化鱼眼相机失败: {e}")
