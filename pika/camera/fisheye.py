@@ -26,12 +26,13 @@ class FisheyeCamera:
         is_connected (bool): 设备是否连接，默认为False
     """
     
-    def __init__(self, camera_width=1280, camera_height=720, camera_fps=30, device_id=0):
+    def __init__(self, camera_width=1280, camera_height=720, camera_fps=30, device_id=0, fisheye_thread_fps=100):
         # fps use to open a high fps thread to get image
         self.camera_width = camera_width
         self.camera_height = camera_height
         self.camera_fps = camera_fps
         self.device_id = device_id
+        self.fisheye_thread_fps = fisheye_thread_fps
         self.cap = None
         self.is_connected = False
         
@@ -55,7 +56,7 @@ class FisheyeCamera:
             self.cap.set(cv2.CAP_PROP_FOURCC, self.fourcc)
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.camera_width)
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.camera_height)
-            self.cap.set(cv2.CAP_PROP_FPS, self.camera_fps)
+            self.cap.set(cv2.CAP_PROP_FPS, self.camera_fps) # 该设置似乎不起作用
             
             if not self.cap.isOpened():
                 logger.error(f"无法打开鱼眼相机，设备ID: {self.device_id}")
@@ -107,7 +108,7 @@ class FisheyeCamera:
     def _reading_thread_func(self):
         
         logger.info("启动鱼眼相机高频读取线程")
-        time_interval = 1 / self.camera_fps
+        time_interval = 1 / self.fisheye_thread_fps
         while not self.stop_thread:
             try:
                 ret, frame = self.cap.read() # 非常高频，至少200Hz, 因此不需要计算等待

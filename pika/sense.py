@@ -248,7 +248,7 @@ class Sense:
         if self._fisheye_camera is None:
             try:
                 from .camera.fisheye import FisheyeCamera
-                self._fisheye_camera = FisheyeCamera(self.camera_width,self.camera_height,self.fisheye_thread_fps,self.fisheye_camera_index)
+                self._fisheye_camera = FisheyeCamera(self.camera_width,self.camera_height,self.camera_fps,self.fisheye_camera_index,self.fisheye_thread_fps)
                 self._fisheye_camera.connect()
             except Exception as e:
                 logger.error(f"初始化鱼眼相机失败: {e}")
