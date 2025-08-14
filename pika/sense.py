@@ -25,6 +25,7 @@ class Sense:
     
     def __init__(self, port='/dev/ttyUSB0'):
         self.port = port
+        json_pattern = r'\{\r\n"Command":[0-1],\r\n"AS5047":\{\r\n"angle":[^\r\n]*,\r\n"rad":[^\r\n]*\r\n\},\r\n\r\n"IMU":\{\r\n"acc":\[[^\r\n]*\],\r\n"gyr":\[[^\r\n]*\],\r\n"pitch":[^\r\n]*,\r\n"roll":[^\r\n]*,\r\n"yaw":[^\r\n]*\r\n\}\r\n\r\n\}'
         self.serial_comm = SerialComm(port=port)
         self.is_connected = False
         self.data_lock = threading.Lock()
@@ -48,6 +49,7 @@ class Sense:
         self.camera_width=1280
         self.camera_height=720
         self.camera_fps=30
+        self.fisheye_thread_fps=100
         
         # 相机对象，延迟初始化
         self._fisheye_camera = None
@@ -186,7 +188,7 @@ class Sense:
         with self.data_lock:
             return self.command_state
     
-    def set_camera_param(self,camera_width,camera_height,camera_fps):
+    def set_camera_param(self,camera_width,camera_height,camera_fps,fisheye_thread_fps=100):
         '''
         设置相机分辨率和帧率
         
@@ -198,6 +200,7 @@ class Sense:
         self.camera_width = camera_width
         self.camera_height = camera_height
         self.camera_fps = camera_fps
+        self.fisheye_thread_fps = fisheye_thread_fps
     
     def set_fisheye_camera_index(self,index):
         '''
@@ -245,7 +248,7 @@ class Sense:
         if self._fisheye_camera is None:
             try:
                 from .camera.fisheye import FisheyeCamera
-                self._fisheye_camera = FisheyeCamera(self.camera_width,self.camera_height,self.camera_fps,self.fisheye_camera_index)
+                self._fisheye_camera = FisheyeCamera(self.camera_width,self.camera_height,self.camera_fps,self.fisheye_camera_index,self.fisheye_thread_fps)
                 self._fisheye_camera.connect()
             except Exception as e:
                 logger.error(f"初始化鱼眼相机失败: {e}")

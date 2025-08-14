@@ -218,10 +218,10 @@ class SerialComm:
             return None
         except json.JSONDecodeError as e:
             logger.error(f"JSON解析错误: {e}")
-            self.buffer = self.buffer[start+1:]  # 跳过错误的开始位置
+            self.buffer = ""  # 跳过错误的开始位置
             return None
         except Exception as e:
-            logger.error(f"查找JSON对象异常: {e}")
+            logger.error(f"通信Json异常: {e}")
             self.buffer = ""
             return None
     
