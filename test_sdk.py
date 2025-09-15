@@ -50,8 +50,9 @@ def test_sense_class():
         
         # 检查方法是否存在
         methods = [
-            'connect', 'disconnect', 'get_imu_data', 'get_encoder_data',
-            'get_command_state', 'get_fisheye_camera', 'get_realsense_camera'
+            'connect', 'disconnect', 'get_gripper_distance', 'get_encoder_data',
+            'get_command_state', 'get_fisheye_camera', 'get_realsense_camera',
+            'get_vive_tracker'
         ]
         for method in methods:
             if hasattr(my_sense, method) and callable(getattr(my_sense, method)):
@@ -78,9 +79,14 @@ def test_gripper_class():
         # 检查方法是否存在
         methods = [
             'connect', 'disconnect', 'enable', 'disable', 'set_zero',
-            'set_angle', 'set_velocity', 'set_effort', 'get_encoder_data',
-            'get_motor_data', 'get_motor_status', 'is_enabled',
-            'get_fisheye_camera', 'get_realsense_camera'
+            'set_velocity', 'set_effort', 
+            'get_motor_data', 'get_motor_status', 'get_motor_speed', 'get_motor_current','get_motor_position',
+            'get_voltage','get_driver_temp','get_motor_temp','get_status_raw',
+            'get_bus_current',
+            'get_fisheye_camera', 'get_realsense_camera',
+            'get_gripper_distance',
+            'set_motor_angle','set_gripper_distance','set_velocity','set_effort',
+            'set_camera_param'
         ]
         for method in methods:
             if hasattr(my_gripper, method) and callable(getattr(my_gripper, method)):
