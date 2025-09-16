@@ -477,7 +477,7 @@ class Gripper:
 
         if found_angle is not None:
             self.set_motor_angle(found_angle)
-            logger.info(f"夹爪已设置为目标距离 {target_gripper_distance_mm} mm，对应电机角度 {found_angle:.4f} rad")
+            logger.error(f"夹爪已设置为目标距离 {target_gripper_distance_mm} mm，对应电机角度 {found_angle:.4f} rad")
             return True
         else:
             logger.error(f"未能找到目标夹爪距离 {target_gripper_distance_mm} mm 对应的电机角度")
