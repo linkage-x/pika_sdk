@@ -10,8 +10,7 @@ import logging
 import numpy as np
 import threading
 import time
-# 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# 创建logger，但不配置全局日志系统
 logger = logging.getLogger('pika.camera.fisheye')
 
 class FisheyeCamera:

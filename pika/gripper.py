@@ -12,8 +12,7 @@ import threading
 import struct
 from .serial_comm import SerialComm
 
-# 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# 创建logger，但不配置全局日志系统
 logger = logging.getLogger('pika.gripper')
 
 # 命令类型枚举
@@ -407,7 +406,7 @@ class Gripper:
         
         return self.serial_comm.send_command(CommandType.CURRENT, current)
     
-    def set_gripper_distance(self, target_gripper_distance_mm):
+    def set_gripper_distance(self, target_gripper_distance_mm, show_debug = False):
         """
         设置夹爪开合距离 (mm)
         
@@ -477,7 +476,8 @@ class Gripper:
 
         if found_angle is not None:
             self.set_motor_angle(found_angle)
-            logger.error(f"夹爪已设置为目标距离 {target_gripper_distance_mm} mm，对应电机角度 {found_angle:.4f} rad")
+            if show_debug:
+                logger.info(f"夹爪已设置为目标距离 {target_gripper_distance_mm} mm，对应电机角度 {found_angle:.4f} rad")
             return True
         else:
             logger.error(f"未能找到目标夹爪距离 {target_gripper_distance_mm} mm 对应的电机角度")

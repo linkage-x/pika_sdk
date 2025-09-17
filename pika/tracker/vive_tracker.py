@@ -16,9 +16,8 @@ import logging
 import numpy as np 
 from .pose_utils import xyzQuaternion2matrix, xyzrpy2Mat, matrixToXYZQuaternion
 
-# 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger('pika.vive_tracker')
+# 创建logger，但不配置全局日志系统
+logger = logging.getLogger('pika.tracker.vive_tracker')
 
 # 导入pysurvive库
 try:
