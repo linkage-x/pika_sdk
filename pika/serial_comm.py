@@ -13,8 +13,7 @@ import logging
 import re # 导入re模块用于正则表达式
 import struct # 导入struct模块
 
-# 配置日志
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+# 创建logger，但不配置全局日志系统
 logger = logging.getLogger("pika.serial_comm")
 
 class SerialComm:
