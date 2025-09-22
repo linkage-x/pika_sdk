@@ -59,7 +59,7 @@ def main():
         print(f"电流: {motor_data['Current']} mA")
 
         # 将sense弧度直接发送给gripper
-        my_gripper.set_motor_angle_upgrade(encoder_data['rad'])
+        my_gripper.set_motor_angle(encoder_data['rad'])
         
         # 等待一段时间
         time.sleep(0.03)
