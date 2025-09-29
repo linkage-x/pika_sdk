@@ -493,6 +493,30 @@ else:
     print("位置设置失败")
 ```
 
+#### set_motor_torque(current)
+
+设置电机电流大小，通过其调整电机力矩。
+
+```python
+success = my_gripper.set_motor_torque(current)
+```
+
+**参数**:
+- `current` (float): 目标电流，单位为A。取值范围通常为 0~2A，超出范围可能导致电机过流保护。
+
+**返回值**:
+- `bool`: 操作是否成功
+
+**示例**:
+```python
+# 设置电机电流为 0.8 A
+if my_gripper.set_motor_torque(0.8):
+    print("电流已设置")
+else:
+    print("电流设置失败")
+```
+
+
 #### set_gripper_distance(target_gripper_distance_mm)
 
 设置夹爪开合距离（mm）。

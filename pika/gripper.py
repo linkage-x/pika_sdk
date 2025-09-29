@@ -21,6 +21,7 @@ class CommandType:
     DISABLE = 10    
     ENABLE = 11
     SET_ZERO = 12
+    CURRENT = 15
     EFFORT_CTRL = 20
     VELOCITY_CTRL = 21
     POSITION_CTRL = 22
@@ -378,6 +379,28 @@ class Gripper:
             logger.warning("电机弧度不能为负值，已设置为0")
         
         return self.serial_comm.send_command(CommandType.POSITION_CTRL, rad)
+    
+    def set_motor_torque(self, current):
+        """
+        设置电机电流大小，通过其调整电机力矩
+        
+        参数:
+            current (float): 电流值，单位为A
+            范围： 0~2A
+            
+        返回:
+            bool: 操作是否成功
+        """
+        if not self.is_connected:
+            logger.error("设备未连接，无法设置电流大小")
+            return False
+        
+        # 确保角度非负
+        if current < 0:
+            current = 0
+            logger.warning("电机电流不能为负值，已设置为0")
+        
+        return self.serial_comm.send_command(CommandType.CURRENT, current)
     
     def set_gripper_distance(self, target_gripper_distance_mm):
         """
