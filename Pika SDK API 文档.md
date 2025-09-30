@@ -354,6 +354,46 @@ devices = my_sense.get_tracker_devices()
 print(f"检测到的设备: {devices}")
 ```
 
+#### light_ctrl(light_id)
+
+控制 Pika Sense 设备的灯光。
+
+```python
+my_sense.light_ctrl(light_id)
+```
+
+**参数**:
+- `light_id` (int): 灯光 ID，0-4 分别对应白、红、绿、蓝、黄灯
+
+**返回值**:
+- 无
+
+**示例**:
+```python
+# 打开白灯
+my_sense.light_ctrl(0)
+```
+
+#### vibrate_ctrl(mode)
+
+控制 Pika Sense 设备的振动马达。
+
+```python
+my_sense.vibrate_ctrl(mode)
+```
+
+**参数**:
+- `mode` (int): 振动模式，0为关闭，1为开启
+
+**返回值**:
+- 无
+
+**示例**:
+```python
+# 开启振动马达
+my_sense.vibrate_ctrl(1)
+```
+
 ## Gripper 类
 
 `Gripper` 类是 Pika Gripper 设备的主要接口，提供对电机控制和状态监测的访问。

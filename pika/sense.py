@@ -15,6 +15,10 @@ from .serial_comm import SerialComm
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('pika.sense')
 
+class CommandType:
+    LIGHT_CTRL = 50
+    VIBRATE_CTRL = 51
+    
 class Sense:
     """
     Pika Sense设备类，提供对Pika Sense设备的访问接口
@@ -334,6 +338,26 @@ class Sense:
             logger.warning("Vive Tracker未初始化，无法获取设备列表")
             return []
     
+    def light_ctrl(self, light_id):
+        """
+        设置Vive Tracker的灯光控制模式
+        
+        参数:
+            light_id (int): 灯光控制，0为白灯亮，1为红灯亮，2为绿灯亮，3为蓝灯亮，4为黄灯亮
+        """
+        return self.serial_comm.send_command(CommandType.LIGHT_CTRL, light_id, big_endian=True)
+    
+    
+    def vibrate_ctrl(self, mode):
+        """
+        设置Vive Tracker的震动模式
+        
+        参数:
+            mode (int): 震动模式，0为关闭，1为开启
+        """
+        return self.serial_comm.send_command(CommandType.VIBRATE_CTRL, mode, big_endian=True)
+        
+        
     def __del__(self):
         """
         析构函数，确保资源被正确释放

@@ -95,24 +95,28 @@ class SerialComm:
             logger.error(f"发送数据失败: {e}")
             return False
     
-    def send_command(self, command_type, value=0.0):
+    def send_command(self, command_type, value=0, big_endian=False):
         """
         发送命令到设备
         
         参数:
             command_type (int): 命令类型
             value (float): 命令值，默认为0.0
+            big_endian (bool): 是否使用大端序，默认为False（小端序）
             
         返回:
             bool: 发送是否成功
-        """
+        """ 
         try:
             # 构建命令数据
             data = bytearray()
             data.append(command_type)  # 命令类型
             
-            # 添加浮点数值（4字节）
-            value_bytes = bytearray(struct.pack('<f', value))
+            if big_endian:
+                value_bytes = bytearray(struct.pack('>i', value))  # 大端序
+            else:
+                value_bytes = bytearray(struct.pack('<f', value))  # 小端序
+            
             data.extend(value_bytes)
             
             # 添加结束符 \r\n
@@ -122,7 +126,7 @@ class SerialComm:
         except Exception as e:
             logger.error(f"构建命令数据失败: {e}")
             return False
-    
+        
     def read_data(self):
         """
         从串口读取数据
