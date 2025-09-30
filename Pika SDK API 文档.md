@@ -542,7 +542,7 @@ success = my_gripper.set_motor_torque(current)
 ```
 
 **参数**:
-- `current` (float): 目标电流，单位为A。取值范围通常为 0~2A，超出范围可能导致电机过流保护。
+- `current` (float): 目标电流，单位为A。取值范围通常为 0~8A，超出范围可能导致电机过流保护。
 
 **返回值**:
 - `bool`: 操作是否成功
