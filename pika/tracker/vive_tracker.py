@@ -22,6 +22,8 @@ logger = logging.getLogger('pika.tracker.vive_tracker')
 # 导入pysurvive库
 try:
     import pysurvive
+    from pysurvive.pysurvive_generated import *
+    from pysurvive import SimpleObject
 except ImportError:
     logger.error("未找到pysurvive库，请确保已正确安装")
     raise ImportError("未找到pysurvive库，请确保已正确安装")
@@ -48,7 +50,7 @@ class ViveTracker:
         args (list, optional): 其他pysurvive参数
     """
     
-    def __init__(self, config_path=None, lh_config=None, args=None):
+    def __init__(self, pose_offset=True, use_uid=False, config_path=None, lh_config=None, args=None):
         self.config_path = config_path
         self.lh_config = lh_config
         self.args = args if args else []
@@ -57,9 +59,11 @@ class ViveTracker:
         self.running = False
         self.context = None
         self.pose_queue = queue.Queue(maxsize=100)  # 用于存储最新位姿的队列
-        self.devices_info = {}  # 存储设备信息的字典
+        self.devices_info = {}  # 存储设备信息的字典, 如果use uid的话key为uid否则为device name
         self.data_lock = threading.Lock()
         self.latest_poses = {}  # 存储每个设备的最新位姿
+        self.use_uid = use_uid
+        self._pose_offset = pose_offset
         
         # 线程对象
         self.collector_thread = None
@@ -185,19 +189,63 @@ class ViveTracker:
         更新设备列表
         """
         try:
-            # 获取当前所有设备
-            devices = list(self.context.Objects())
+            device_key_list = self._get_device_uid_list() if self.use_uid else self._get_device_name_list()
+            if device_key_list is None:
+                raise ValueError(f'获取device key列表出错， 是否使用uid: {self.use_uid}')
             
             # 更新设备信息字典
             with self.data_lock:
-                for device in devices:
-                    device_name = str(device.Name(), 'utf-8')
-                    if device_name not in self.devices_info:
-                        logger.info(f"检测到新设备: {device_name}")
-                        self.devices_info[device_name] = {"updates": 0, "last_update": 0}
+                for device_key in device_key_list:
+                    if device_key not in self.devices_info:
+                        logger.info(f"检测到新设备: {device_key}, 是否使用uid: {self.use_uid}")
+                        self.devices_info[device_key] = {"updates": 0, "last_update": 0}
         except Exception as e:
             logger.error(f"更新设备列表时出错: {e}")
+
+    def _get_device_name_list(self):
+        """
+        获取设备name
+        """
+        try:
+            # 获取当前所有设备
+            devices = list(self.context.Objects())
+            
+            # 获取所有设备的name list
+            name_lists = []
+            for device in devices:
+                name = str(device.Name(), 'utf-8')
+                name_lists.append(name)
+            return name_lists
+        except Exception as e:
+            logger.error(f"更新设备name列表时出错: {e}")
+            return None
     
+    def _get_device_uid_list(self):
+        """
+        获取设备uid
+        """
+        try:
+            # 获取当前所有设备
+            devices = list(self.context.Objects())
+            
+            # 获取所有设备的uid list
+            uid_lists = []
+            for device in devices:
+                cur_device_uid = str(simple_serial_number(device.ptr), 'utf-8')
+                uid_lists.append(cur_device_uid)
+            return uid_lists
+        except Exception as e:
+            logger.error(f"更新设备uid列表时出错: {e}")
+            return None
+        
+    def _get_device_uid(self, device):
+        try:
+            device_uid = str(simple_serial_number(device.ptr), 'utf-8')
+            return device_uid
+        except Exception as e:
+            logger.error(f"获取设备uid时出错: {e}")
+            return None
+        
     def _pose_collector(self):
         """
         位姿收集线程函数
@@ -211,22 +259,25 @@ class ViveTracker:
             logger.warning("警告: 未检测到任何设备")
         else:
             logger.info(f"检测到 {len(devices)} 个设备:")
-            for device in devices:
-                device_name = str(device.Name(), 'utf-8')
-                logger.info(f"  - {device_name}")
-                self.devices_info[device_name] = {"updates": 0, "last_update": 0}
+            device_key_list = self._get_device_uid_list() if self.use_uid else self._get_device_name_list()
+                        
+            for device_key in device_key_list:
+                logger.info(f"  - {device_key} use uid: {self.use_uid}")
+                self.devices_info[device_key] = {"updates": 0, "last_update": 0}
         
         # 持续获取最新位姿
         while self.running and self.context.Running():
             updated = self.context.NextUpdated()
             if updated:
-                # 获取设备名称
-                device_name = str(updated.Name(), 'utf-8')
+                # 获取设备key
+                if not self.use_uid:
+                    device_name = str(updated.Name(), 'utf-8')
+                else: device_name = self._get_device_uid(updated)
                 
                 # 如果是新设备，添加到设备信息字典
                 with self.data_lock:
                     if device_name not in self.devices_info:
-                        logger.info(f"检测到新设备更新: {device_name}")
+                        logger.info(f"检测到新设备更新: {device_name}, 是否使用uid: {self.use_uid}")
                         self.devices_info[device_name] = {"updates": 0, "last_update": 0}
                 
                 # 获取位姿数据
@@ -241,16 +292,19 @@ class ViveTracker:
                                 pose_data.Rot[1], pose_data.Rot[2], pose_data.Rot[3], pose_data.Rot[0]
                             )
                 
-                # 初始旋转校正：绕X轴旋转 -20度（roll）
-                initial_rotation = xyzrpy2Mat(0, 0, 0, -(20.0 / 180.0 * math.pi), 0, 0)
-                # 对齐旋转：绕X轴 -90度，绕Y轴 -90度
-                alignment_rotation = xyzrpy2Mat(0, 0, 0, -90/180*math.pi, -90/180*math.pi, 0)
-                # 合并旋转矩阵
-                rotate_matrix = np.dot(initial_rotation,alignment_rotation)
-                # 应用平移变换 - 将采集到的pose数据变换到夹爪中心
-                transform_matrix = xyzrpy2Mat(0.172, 0, -0.076, 0, 0, 0)
-                # 计算最终变换矩阵
-                result_mat = np.matmul(np.matmul(origin_mat, rotate_matrix), transform_matrix)
+                if self._pose_offset:
+                    # 初始旋转校正：绕X轴旋转 -20度（roll）
+                    initial_rotation = xyzrpy2Mat(0, 0, 0, -(20.0 / 180.0 * math.pi), 0, 0)
+                    # 对齐旋转：绕X轴 -90度，绕Y轴 -90度
+                    alignment_rotation = xyzrpy2Mat(0, 0, 0, -90/180*math.pi, -90/180*math.pi, 0)
+                    # 合并旋转矩阵
+                    rotate_matrix = np.dot(initial_rotation,alignment_rotation)
+                    # 应用平移变换 - 将采集到的pose数据变换到夹爪中心
+                    transform_matrix = xyzrpy2Mat(0.172, 0, -0.076, 0, 0, 0)
+                    # 计算最终变换矩阵
+                    result_mat = np.matmul(np.matmul(origin_mat, rotate_matrix), transform_matrix)
+                else:
+                    result_mat = origin_mat
                 # 从结果矩阵中提取位置和四元数
                 x, y, z, qx, qy, qz, qw = matrixToXYZQuaternion(result_mat)
                 

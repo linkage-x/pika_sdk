@@ -39,7 +39,7 @@ try:
         try:
             # 获取Vive Tracker对象
             logger.info("获取Vive Tracker对象...")
-            tracker = sense.get_vive_tracker()
+            tracker = sense.get_vive_tracker(use_uid=True)
             
             if not tracker:
                 logger.error("获取Vive Tracker对象失败，请确保已安装pysurvive库")
@@ -55,7 +55,8 @@ try:
             logger.info(f"检测到的设备: {devices}")
             
             # 检查是否存在WM0设备，如果没有则重试
-            target_device = "WM0"
+            # LHR-5EC33B35为right pika sense; LHR-0DFD738C为left pika sense
+            target_device = "LHR-0DFD738C"
             retry_count = 0
             max_retries = 10
             
