@@ -143,9 +143,14 @@ class Sense:
                 # 处理命令状态
                 if 'Command' in data:
                     self.command_state = data['Command']
+                
+                # 处理版本信息
+                if 'Version' in data:
+                    logger.info(f"设备版本信息: {data['Version']}")
+                    
         except Exception as e:
             logger.error(f"处理数据回调异常: {e}")
-    
+            
     def get_distance(self,angle):
         angle = (180.0 - 43.99) / 180.0 * math.pi - angle
         height = 0.0325 * math.sin(angle)
@@ -357,7 +362,15 @@ class Sense:
         """
         return self.serial_comm.send_command(CommandType.VIBRATE_CTRL, mode, big_endian=True)
         
+    def get_version(self):
+        """
+        获取Gripper的版本信息
         
+        返回:
+            tuple: 包含版本信息的元组
+        """
+        return self.serial_comm.get_device_info_command()
+    
     def __del__(self):
         """
         析构函数，确保资源被正确释放

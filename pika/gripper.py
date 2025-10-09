@@ -151,6 +151,11 @@ class Gripper:
                         'Status': status.get('Status', "0x00"),
                         'BusCurrent': status.get('BusCurrent', 0)
                     }
+                
+                # 处理版本信息
+                if 'Version' in data:
+                    logger.info(f"设备版本信息: {data['Version']}")
+                    
         except Exception as e:
             logger.error(f"处理数据回调异常: {e}")
     
@@ -586,6 +591,15 @@ class Gripper:
                 return None
         
         return self._realsense_camera
+    
+    def get_version(self):
+        """
+        获取Gripper的版本信息
+        
+        返回:
+            tuple: 包含版本信息的元组
+        """
+        return self.serial_comm.get_device_info_command()
     
     def __del__(self):
         """

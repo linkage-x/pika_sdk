@@ -394,6 +394,23 @@ my_sense.vibrate_ctrl(mode)
 my_sense.vibrate_ctrl(1)
 ```
 
+#### get_version()
+
+获取 Pika Sense 设备的固件版本。
+
+```python
+my_sense.get_version()
+```
+
+**返回值**:
+- 无
+
+**示例**:
+```python
+my_sense.get_version()
+```
+
+
 ## Gripper 类
 
 `Gripper` 类是 Pika Gripper 设备的主要接口，提供对电机控制和状态监测的访问。
@@ -958,6 +975,23 @@ if realsense_camera:
         # 处理彩色图像
         pass
 ```
+
+#### get_version()
+
+获取 Pika Gripper 设备的固件版本。
+
+```python
+my_sense.get_version()
+```
+
+**返回值**:
+- 无
+
+**示例**:
+```python
+my_sense.get_version()
+```
+
 
 ## FisheyeCamera 类
 

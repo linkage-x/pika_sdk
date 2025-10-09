@@ -127,6 +127,23 @@ class SerialComm:
             logger.error(f"构建命令数据失败: {e}")
             return False
         
+    def get_device_info_command(self):
+        """
+        下发GET_INFO\r\n命令到设备
+        
+        返回:
+            bool: 发送是否成功
+        """
+        try:
+            # 构建GET_INFO命令数据
+            command = 'GET_INFO\r\n'
+            data = command.encode('utf-8')
+            
+            return self.send_data(data)
+        except Exception as e:
+            logger.error(f"发送GET_INFO命令失败: {e}")
+            return False
+        
     def read_data(self):
         """
         从串口读取数据
