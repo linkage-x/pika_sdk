@@ -39,7 +39,8 @@ try:
         try:
             # 获取Vive Tracker对象
             logger.info("获取Vive Tracker对象...")
-            tracker = sense.get_vive_tracker(use_uid=True)
+            sense.set_vive_tracker_config(use_uid=True)
+            tracker = sense.get_vive_tracker()
             
             if not tracker:
                 logger.error("获取Vive Tracker对象失败，请确保已安装pysurvive库")
@@ -76,7 +77,7 @@ try:
             
             # 循环获取WM0设备的位姿数据
             logger.info(f"开始获取{target_device}设备的位姿数据...")
-            for i in range(20):  # 获取20次数据
+            for i in range(1000):  # 获取20次数据
                 # 获取WM0设备的位姿数据
                 pose = sense.get_pose(target_device)
                 

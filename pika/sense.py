@@ -63,6 +63,8 @@ class Sense:
         self._vive_tracker_config = None
         self._vive_tracker_lh = None
         self._vive_tracker_args = None
+        self._vive_tracker_pose_offset = True
+        self._vive_tracker_use_uid = False
     
     def connect(self):
         """
@@ -228,7 +230,8 @@ class Sense:
         '''
         self.realsense_serial_number = serial_number
     
-    def set_vive_tracker_config(self, config_path=None, lh_config=None, args=None):
+    def set_vive_tracker_config(self, config_path=None, lh_config=None, args=None,
+                                pose_offset=True, use_uid=False):
         '''
         设置Vive Tracker配置
         
@@ -240,6 +243,8 @@ class Sense:
         self._vive_tracker_config = config_path
         self._vive_tracker_lh = lh_config
         self._vive_tracker_args = args
+        self._vive_tracker_pose_offset = pose_offset
+        self._vive_tracker_use_uid = use_uid
         
     def get_fisheye_camera(self):
         """
@@ -287,7 +292,7 @@ class Sense:
         
         return self._realsense_camera
     
-    def get_vive_tracker(self, pose_offset=True, use_uid=False):
+    def get_vive_tracker(self):
         """
         获取Vive Tracker对象
         
@@ -302,8 +307,8 @@ class Sense:
                     config_path=self._vive_tracker_config,
                     lh_config=self._vive_tracker_lh,
                     args=self._vive_tracker_args,
-                    pose_offset=pose_offset,
-                    use_uid=use_uid
+                    pose_offset=self._vive_tracker_pose_offset,
+                    use_uid=self._vive_tracker_use_uid
                 )
                 self._vive_tracker.connect()
             except Exception as e:
