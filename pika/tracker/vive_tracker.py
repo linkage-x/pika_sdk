@@ -50,7 +50,7 @@ class ViveTracker:
         args (list, optional): 其他pysurvive参数
     """
     
-    def __init__(self, pose_offset=True, use_uid=False, config_path=None, lh_config=None, args=None):
+    def __init__(self, pose_offset=None, use_uid=False, config_path=None, lh_config=None, args=None):
         self.config_path = config_path
         self.lh_config = lh_config
         self.args = args if args else []
@@ -292,7 +292,10 @@ class ViveTracker:
                                 pose_data.Rot[1], pose_data.Rot[2], pose_data.Rot[3], pose_data.Rot[0]
                             )
                 
-                if self._pose_offset:
+                pose_offset = True
+                if self._pose_offset and device_name in self._pose_offset: 
+                    pose_offset = self._pose_offset[device_name]
+                if pose_offset:
                     # 初始旋转校正：绕X轴旋转 -20度（roll）
                     initial_rotation = xyzrpy2Mat(0, 0, 0, -(20.0 / 180.0 * math.pi), 0, 0)
                     # 对齐旋转：绕X轴 -90度，绕Y轴 -90度
