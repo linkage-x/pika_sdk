@@ -63,7 +63,7 @@ class Sense:
         self._vive_tracker_config = None
         self._vive_tracker_lh = None
         self._vive_tracker_args = None
-        self._vive_tracker_pose_offset = True
+        self._vive_tracker_pose_offset = None
         self._vive_tracker_use_uid = False
     
     def connect(self):
@@ -231,7 +231,7 @@ class Sense:
         self.realsense_serial_number = serial_number
     
     def set_vive_tracker_config(self, config_path=None, lh_config=None, args=None,
-                                pose_offset=True, use_uid=False):
+                                pose_offset=None, use_uid=False):
         '''
         设置Vive Tracker配置
         

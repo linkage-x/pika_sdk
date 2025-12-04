@@ -57,7 +57,7 @@ try:
             
             # 检查是否存在WM0设备，如果没有则重试
             # LHR-5EC33B35为right pika sense; LHR-0DFD738C为left pika sense
-            target_device = "LHR-0DFD738C"
+            target_device = "LHR-FBDCC919"
             retry_count = 0
             max_retries = 10
             
