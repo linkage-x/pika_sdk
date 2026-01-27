@@ -37,6 +37,8 @@ class SerialComm:
         self.callback = None
         self.data_lock = threading.Lock()
         self.latest_data = {}
+        # Prevent unbounded buffer growth under noisy serial lines.
+        self._max_buffer_len = 4096
     
     def connect(self):
         """
@@ -189,10 +191,6 @@ class SerialComm:
                         # 更新最新数据
                         with self.data_lock:
                             self.latest_data = json_data
-                    # 缓冲区数据长度大于2000字节就将其清空
-                    else:
-                        if len(self.buffer) > 2000:
-                            self.buffer = ""
                 
                 # 短暂休眠，避免CPU占用过高
                 time.sleep(0.001)
@@ -210,35 +208,60 @@ class SerialComm:
             dict: 解析到的JSON对象，如果没有找到则返回None
         """
         try:
-            # 查找JSON对象的开始和结束位置
-            start = self.buffer.find('{')
+            # 查找JSON对象的开始位置
+            buf = self.buffer
+            start = buf.find('{')
             if start == -1:
-                self.buffer = ""
+                if len(buf) > self._max_buffer_len:
+                    self.buffer = ""
                 return None
+            if start > 0:
+                # 丢弃噪声前缀，仅保留可能的JSON起点
+                buf = buf[start:]
+                start = 0
             
-            # 使用栈来匹配括号
-            stack = []
-            for i in range(start, len(self.buffer)):
-                if self.buffer[i] == '{':
-                    stack.append(i)
-                elif self.buffer[i] == '}':
-                    if stack:
-                        stack.pop()
-                        if not stack:  # 找到完整的JSON对象
-                            json_str = self.buffer[start:i+1]
-                            self.buffer = self.buffer[i+1:]
-                            
+            # 使用括号计数并跳过字符串内容，避免字符串内的花括号干扰
+            depth = 0
+            in_string = False
+            escaped = False
+            for i in range(start, len(buf)):
+                ch = buf[i]
+                if in_string:
+                    if escaped:
+                        escaped = False
+                    elif ch == '\\':
+                        escaped = True
+                    elif ch == '"':
+                        in_string = False
+                    continue
+                else:
+                    if ch == '"':
+                        in_string = True
+                        continue
+                    if ch == '{':
+                        depth += 1
+                    elif ch == '}':
+                        depth -= 1
+                        if depth == 0:
+                            json_str = buf[start:i+1]
+                            remainder = buf[i+1:]
+
                             # --- 关键修改：处理多余的逗号 ---
                             cleaned_json_str = re.sub(r',\s*}', '}', json_str)
                             cleaned_json_str = re.sub(r',\s*\]', ']', cleaned_json_str)
-                            
-                            return json.loads(cleaned_json_str)
-            
-            # 如果没有找到完整的JSON对象，保留缓冲区
+
+                            parsed = json.loads(cleaned_json_str)
+                            self.buffer = remainder
+                            return parsed
+
+            # 未找到完整JSON对象，保留缓冲区（尽量保留起始位置后的内容）
+            if len(buf) - start > self._max_buffer_len:
+                self.buffer = buf[start:][-self._max_buffer_len:]
             return None
         except json.JSONDecodeError as e:
-            # logger.error(f"JSON解析错误: {e}")
-            self.buffer = ""  # 跳过错误的开始位置
+            logger.error(f"JSON解析错误: {e}")
+            # 丢弃当前起始符，尝试从后续数据中恢复
+            self.buffer = buf[start+1:] if start >= 0 else ""
             return None
         except Exception as e:
             logger.error(f"通信Json异常: {e}")
@@ -286,5 +309,3 @@ class SerialComm:
         析构函数，确保资源被正确释放
         """
         self.disconnect()
-
-
